@@ -4,7 +4,8 @@
 # python
 /venv/
 __pycache__/
-
+.idea
+.gitignore
 # Pyrogram
 /*.session
 /*.session-journal

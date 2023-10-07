@@ -28,11 +28,8 @@ Pillow
 youtube-dl
 
 # ../../config.py
-MUSIC_CHATS = [
-    -1234567891012,
-    -2345678910123
-]
-MUSIC_USERS = [1234567890]
+MUSIC_CHATS="306388372 downloader_ytube_bot"
+MUSIC_USERS = [5448484194]
 MUSIC_DELAY_DELETE_INFORM = 10
 MUSIC_INFORM_AVAILABILITY = (
     "This bot only serves the specified group and"
@@ -47,6 +44,8 @@ from datetime import timedelta
 from urllib.parse import urlparse
 from pyrogram import Client, filters, idle
 from pyrogram.types import Message
+from pyrogram.types import (ReplyKeyboardMarkup, InlineKeyboardMarkup,
+                            InlineKeyboardButton)
 from pyrogram.enums import ParseMode, ChatAction
 from youtube_dl import YoutubeDL
 from PIL import Image
@@ -76,10 +75,10 @@ def get_music_chats():
     return chats
 
 
-MUSIC_CHATS = get_music_chats()
-API_ID = os.environ["API_ID"]
-API_HASH = os.environ["API_HASH"]
-BOT_TOKEN = os.environ["BOT_TOKEN"]
+MUSIC_CHATS=[306388372]
+API_ID = "25291849"
+API_HASH = "6ba5f46e6d16308fd99c8fdecb405dcd"
+BOT_TOKEN = "6553426112:AAG-jnE_23e1awuY-eqLt7oKtuAElEO7prI"
 app = Client(
     "tgmusicbot",
     api_id=API_ID,
@@ -91,16 +90,30 @@ app = Client(
 # - handlers and functions
 main_filter = (
     filters.text
-    & filters.chat(MUSIC_CHATS)
+#    & filters.chat(MUSIC_CHATS)
     & filters.incoming
     #& ~filters.edited
 )
 
 
-@app.on_message(main_filter & filters.regex("^/ping$"))
+
+@app.on_message(main_filter & filters.regex("^/start$"))
 async def ping_pong(_, message):
-    await _reply_and_delete_later(message, "pong",
-                                  DELAY_DELETE_INFORM)
+    await app.replay_message(
+        "me",  # Edit this
+        "This is a ReplyKeyboardMarkup example",
+        reply_markup=ReplyKeyboardMarkup(
+            [
+                ["A", "B", "C", "D"],  # First row
+                ["E", "F", "G"],  # Second row
+                ["H", "I"],  # Third row
+                ["J"]  # Fourth row
+            ],
+            resize_keyboard=True  # Make the keyboard smaller
+        )
+    )
+    await message.reply_text('Скачать видео из ютуба и переести в аудио')
+    # await _reply_and_delete_later(message, "pong", DELAY_DELETE_INFORM)
 
 
 @app.on_message(main_filter
@@ -120,6 +133,9 @@ async def _fetch_and_send_music(message: Message):
         }
         ydl = YoutubeDL(ydl_opts)
         info_dict = ydl.extract_info(message.text, download=False)
+        text = f"<b>{info_dict['title']}</b>"
+        print(info_dict['thumbnail'])
+        await app.send_photo(chat_id=message.chat.id, photo=info_dict['thumbnail'].split('?')[0], caption=text, parse_mode=ParseMode.HTML)
         # send a link as a reply to bypass Music category check
         if not message.reply_to_message \
                 and _youtube_video_not_music(info_dict):
@@ -141,8 +157,7 @@ async def _fetch_and_send_music(message: Message):
                                             disable_notification=True)
         ydl.process_info(info_dict)
         audio_file = ydl.prepare_filename(info_dict)
-        task = asyncio.create_task(_upload_audio(message, info_dict,
-                                                 audio_file))
+        task = asyncio.create_task(_upload_audio(message, info_dict, audio_file))
         await message.reply_chat_action(ChatAction.UPLOAD_DOCUMENT)
         await d_status.delete()
         while not task.done():
@@ -156,9 +171,6 @@ async def _fetch_and_send_music(message: Message):
 
 
 def _youtube_video_not_music(info_dict):
-    if info_dict['extractor'] == 'youtube' \
-            and 'Music' not in info_dict['categories']:
-        return True
     return False
 
 
