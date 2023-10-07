@@ -43,6 +43,7 @@ import asyncio
 from datetime import timedelta
 from urllib.parse import urlparse
 from pyrogram import Client, filters, idle
+
 from pyrogram.types import Message
 from pyrogram.types import (ReplyKeyboardMarkup, InlineKeyboardMarkup,
                             InlineKeyboardButton)
@@ -96,24 +97,35 @@ main_filter = (
 )
 
 
-
 @app.on_message(main_filter & filters.regex("^/start$"))
 async def ping_pong(_, message):
-    await app.replay_message(
-        "me",  # Edit this
-        "This is a ReplyKeyboardMarkup example",
-        reply_markup=ReplyKeyboardMarkup(
+    text = f"<b>\U0001f600 Выберите язык:</b>"
+    await message.reply_text(
+        text,
+        quote=False,
+        parse_mode=ParseMode.HTML,
+        reply_markup=InlineKeyboardMarkup(
             [
-                ["A", "B", "C", "D"],  # First row
-                ["E", "F", "G"],  # Second row
-                ["H", "I"],  # Third row
-                ["J"]  # Fourth row
-            ],
-            resize_keyboard=True  # Make the keyboard smaller
+                [
+                    InlineKeyboardButton(
+                        "Русский",
+                        callback_data='ru'
+                    ),
+                ],
+                [
+                    InlineKeyboardButton(
+                        "O'zbekcha",
+                        callback_data='oz'
+                    ),
+                ]
+            ]
         )
     )
-    await message.reply_text('Скачать видео из ютуба и переести в аудио')
     # await _reply_and_delete_later(message, "pong", DELAY_DELETE_INFORM)
+
+#@app.on_raw_update(lambda callback_query: True)
+#async def lang(message: Message):
+#    await message.reply_text('Скидывай ссылку', quote=False)
 
 
 @app.on_message(main_filter
@@ -134,7 +146,6 @@ async def _fetch_and_send_music(message: Message):
         ydl = YoutubeDL(ydl_opts)
         info_dict = ydl.extract_info(message.text, download=False)
         text = f"<b>{info_dict['title']}</b>"
-        print(info_dict['thumbnail'])
         await app.send_photo(chat_id=message.chat.id, photo=info_dict['thumbnail'].split('?')[0], caption=text, parse_mode=ParseMode.HTML)
         # send a link as a reply to bypass Music category check
         if not message.reply_to_message \
